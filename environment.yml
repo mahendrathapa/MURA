@@ -108,6 +108,7 @@ dependencies:
     - flake8==3.7.8
     - mccabe==0.6.1
     - pep8==1.7.1
+    - pillow==6.1.0
     - pycodestyle==2.5.0
     - pyflakes==2.1.1
 
