@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# IDE
+.vscode/*
+
 # Data File
 data/*
+
 
