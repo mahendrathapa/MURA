@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from constants import Constants
+from src.constants import Constants
 
 
 class DenseLayer(nn.module):
@@ -157,7 +157,9 @@ class Densenet(nn.module):
         out4 = self.trans3(self.block3(out3))
         out5 = self.block4(out4)
         out6 = self.relu(self.norm1(out5))
-        out7 = nn.AvgPool2D(out6, stride=1, kernel_size=7)
+        out7 = nn.AvgPool2D(
+            out6, stride=1, kernel_size=Constants.IMAGE_SIZE // 32
+        )
         out = out7.view(-1, self.channels)
         return self.fc(out)
 
