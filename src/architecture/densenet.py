@@ -4,13 +4,13 @@ import torch.nn as nn
 from src.constants import Constants
 
 
-class DenseLayer(nn.module):
+class DenseLayer(nn.Module):
     def __init__(self, in_channel, growth_rate, bn_size, drop_rate):
-        super().__init__
+        super().__init__()
 
-        self.norm1 = nn.BatchNorm2D(in_channel)
+        self.norm1 = nn.BatchNorm2d(in_channel)
         self.relu = nn.ReLU(inplace=True)
-        self.conv1 = nn.Conv2D(
+        self.conv1 = nn.Conv2d(
             in_channel,
             bn_size * growth_rate,
             kernel_size=1,
@@ -18,7 +18,7 @@ class DenseLayer(nn.module):
             padding=0,
             bias=False
             )
-        self.conv2 = nn.Conv2D(
+        self.conv2 = nn.Conv2d(
             bn_size * growth_rate,
             growth_rate,
             kernel_size=3,
@@ -41,10 +41,10 @@ class DenseLayer(nn.module):
         return torch.cat([x, output], 1)
 
 
-class DenseBlock(nn.module):
+class DenseBlock(nn.Module):
     def __init__(self, in_channel, num_layers, growth_rate, bn_size=4,
                  drop_rate=0.0):
-        super().__init__
+        super().__init__()
         layers = []
 
         for i in range(num_layers):
@@ -60,11 +60,11 @@ class DenseBlock(nn.module):
 class TransitionBlock(nn.Module):
     def __init__(self, in_channel, compression_rate=1.0, drop_rate=0.0):
         super().__init__()
-        self.norm1 = nn.BatchNorm2D(in_channel)
+        self.norm1 = nn.BatchNorm2d(in_channel)
         self.relu = nn.ReLU(inplace=True)
-        self.conv1 = nn.Conv2D(
+        self.conv1 = nn.Conv2d(
             in_channel,
-            compression_rate * in_channel,
+            int(in_channel * compression_rate),
             kernel_size=1,
             stride=1,
             padding=0,
@@ -79,19 +79,19 @@ class TransitionBlock(nn.Module):
             output = nn.functional.dropout(
                 output, p=self._drop_rate, training=self.training
             )
-        return nn.AvgPool2D(output, kernel_size=2, stride=2)
+        return nn.functional.avg_pool2d(output, kernel_size=2)
 
 
-class Densenet(nn.module):
-    def __init__(self, growth_rate=32, compression_rate=0.5, in_channel=64,
+class Densenet(nn.Module):
+    def __init__(self, growth_rate=32, compression_rate=0.5, in_channel=1,
                  bn_size=4, drop_rate=0, num_class=1):
 
         super().__init__()
 
-        block_config = Constants.BLOCK_CONFIG
+        block_config = Constants.DENSE_BLOCK_STRUCTURE
 
         # Initial convolution
-        self.conv1 = nn.Conv2(
+        self.conv1 = nn.Conv2d(
             in_channel,
             2 * growth_rate,
             kernel_size=7,
@@ -110,6 +110,7 @@ class Densenet(nn.module):
         in_channel += growth_rate * block_config[0]
         self.trans1 = TransitionBlock(in_channel, compression_rate, drop_rate)
         in_channel *= compression_rate
+        in_channel = int(in_channel)
 
         # Block 1
         self.block2 = DenseBlock(
@@ -118,6 +119,7 @@ class Densenet(nn.module):
         in_channel += growth_rate * block_config[1]
         self.trans2 = TransitionBlock(in_channel, compression_rate, drop_rate)
         in_channel *= compression_rate
+        in_channel = int(in_channel)
 
         # Block 1
         self.block3 = DenseBlock(
@@ -126,6 +128,8 @@ class Densenet(nn.module):
         in_channel += growth_rate * block_config[2]
         self.trans3 = TransitionBlock(in_channel, compression_rate, drop_rate)
         in_channel *= compression_rate
+        in_channel = int(in_channel)
+
 
         # Block 4
         self.block4 = DenseBlock(
@@ -143,7 +147,7 @@ class Densenet(nn.module):
         # ----------Not clear about this part------------
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal(m.weight.data)
+                nn.init.kaiming_normal_(m.weight.data)
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
@@ -151,17 +155,18 @@ class Densenet(nn.module):
                 m.bias.data.zero_()
 
     def forward(self, x):
+        print("size of input=", x.size())
         out1 = self.conv1(x)
         out2 = self.trans1(self.block1(out1))
         out3 = self.trans2(self.block2(out2))
         out4 = self.trans3(self.block3(out3))
         out5 = self.block4(out4)
         out6 = self.relu(self.norm1(out5))
-        out7 = nn.AvgPool2D(
-            out6, stride=1, kernel_size=Constants.IMAGE_SIZE // 32
+        out7 = nn.functional.avg_pool2d(
+            out6, kernel_size=Constants.IMAGE_SIZE // 32
         )
         out = out7.view(-1, self.channels)
-        return self.fc(out)
+        return self.fc1(out)
 
 
 

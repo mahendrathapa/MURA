@@ -33,20 +33,29 @@ class DenseNetModel:
             betas=(0.9, 0.999)
         )
 
-        self.loss_function = functional.binary_cross_entropy_with_logits()
+        self.loss_function = functional.binary_cross_entropy_with_logits
 
         self.start_epoch = 1
         self.base_out_dir = (
             Path(self.model_config.OUTPUT_ROOT_PATH) / self.config.run_id
         ).mkdir(exist_ok=True, parents=True)
+        self.base_out_dir = (
+            Path(self.model_config.OUTPUT_ROOT_PATH) / self.config.run_id
+        )
 
         self.model_out_dir = (
             Path(self.base_out_dir) / "checkpoints"
         ).mkdir(parents=True, exist_ok=True)
+        self.model_out_dir = (
+            Path(self.base_out_dir) / "checkpoints"
+        )
 
         self.config_out_dir = (
             Path(self.base_out_dir) / "config"
         ).mkdir(parents=True, exist_ok=True)
+        self.config_out_dir = (
+            Path(self.base_out_dir) / "config"
+        )
 
         self.results = defaultdict(list)
         self.best_result = defaultdict(list)
@@ -107,7 +116,7 @@ class DenseNetModel:
         self.best_result["val_loss"] = np.inf
 
         start = self.start_epoch
-        end = start + self.config.epoch
+        end = start + self.model_config.epoch
 
         for epoch in range(start, end):
             self.network = self.network.train()
