@@ -11,6 +11,6 @@ def get_image(image_path, transform=None):
     image = np.array(image)
     image = image.astype('float')
     image = torch.from_numpy(image).float()
-    image = image.unsqueeze(0)
+    # image = image.unsqueeze(0)
 
     return image

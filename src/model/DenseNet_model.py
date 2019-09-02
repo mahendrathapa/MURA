@@ -126,7 +126,7 @@ class DenseNetModel:
                 target = batch_set["y"].to(self.device)
 
                 self.optimizer.zero_grad()
-                predictions = self.network.predict(inputs)
+                predictions = self.network(inputs)
                 loss = self.loss_function(predictions, target)
                 loss.backward()
                 self.optimizer.step()

@@ -51,9 +51,9 @@ class Config:
 class LocalConfig(Config):
     def __init__(self):
         super().__init__(
-            train_batch_size=4,
+            train_batch_size=1,
             test_batch_size=1,
-            val_batch_size=4,
+            val_batch_size=1,
             # train_num_workers=os.cpu_count(),
             train_num_workers=1,
             # val_num_workers=os.cpu_count(),

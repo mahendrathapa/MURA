@@ -155,7 +155,6 @@ class Densenet(nn.Module):
                 m.bias.data.zero_()
 
     def forward(self, x):
-        print("size of input=", x.size())
         out1 = self.conv1(x)
         out2 = self.trans1(self.block1(out1))
         out3 = self.trans2(self.block2(out2))
@@ -163,7 +162,7 @@ class Densenet(nn.Module):
         out5 = self.block4(out4)
         out6 = self.relu(self.norm1(out5))
         out7 = nn.functional.avg_pool2d(
-            out6, kernel_size=Constants.IMAGE_SIZE // 32
+            out6, kernel_size=Constants.IMAGE_SIZE // 16
         )
         out = out7.view(-1, self.channels)
         return self.fc1(out)
