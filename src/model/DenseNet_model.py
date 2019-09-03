@@ -237,7 +237,7 @@ class DenseNetModel:
 
     def predict(self, image_path):
         self.network = self.network.eval()
-        image = get_image(image_path, add_dim=True)
+        image = get_image(image_path, unsqueeze_dim=2)
 
         with torch.no_grad():
             image = image.to(self.device)

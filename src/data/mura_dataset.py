@@ -9,7 +9,7 @@ from src.utils.data_utils import get_image
 
 class ValMuraDataset(Dataset):
 
-    def __init__(self, model_config, data, transform):
+    def __init__(self, model_config, data, transform=None):
         self.model_config = model_config
         self.data = data
         self.transform = transform
