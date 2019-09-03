@@ -12,6 +12,8 @@ from tensorboardX import SummaryWriter
 
 from src.constants import Constants
 from src.utils.data_utils import get_image
+from src.utils.evaluate_utils import kappa_cohen
+from src.utils.plot_utils import generate_plot
 
 
 class DenseNetModel:
@@ -112,8 +114,8 @@ class DenseNetModel:
             time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime())
         ))
 
-        self.best_result["train_loss"] = np.inf
-        self.best_result["val_loss"] = np.inf
+        self.best_result["train_kappa"] = np.inf
+        self.best_result["val_kappa"] = np.inf
 
         start = self.start_epoch
         end = start + self.model_config.epoch
@@ -131,57 +133,63 @@ class DenseNetModel:
                 loss.backward()
                 self.optimizer.step()
 
-            train_loss = self.test(self.train_data, ds_type="train_set")
+            train_loss, train_kappa = self.test(self.train_data, ds_type="train_set")
             self.results["epochs"].append(epoch)
             self.results["train_loss"].append(train_loss)
+            self.results["train_kappa"].append(train_kappa)
 
-            print("{} Epoch: {}, Train loss: {:.4f}".format(
+            print("{} Epoch: {}, Train loss: {:.4f}, Train Cohen Kappa Score: {:.4f}".format(
                 time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime()),
                 epoch,
-                train_loss
+                train_loss,
+                train_kappa
             ))
             writer.add_scalars("Loss", {"train_loss": train_loss}, epoch)
 
             if self.val_data:
-                val_loss = self.test(self.val_data)
+                val_loss, val_kappa = self.test(self.val_data)
                 self.results["val_loss"].append(val_loss)
+                self.results["val_kappa"].append(val_kappa)
 
-                print("{} Epoch: {}, Val loss: {:.4f}".format(
+                print("{} Epoch: {}, Val loss: {:.4f}, Val Cohen Kappa Score: {:.4f}".format(
                     time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime()),
                     epoch,
-                    val_loss
+                    val_loss,
+                    val_kappa
                 ))
                 writer.add_scalars("Loss", {"val_loss": val_loss}, epoch)
 
             # Now plotting
-            fig = plt.figure()
-            plt.plot(
-                self.results["epochs"],
-                self.results["train_loss"],
-                label="train"
-            )
-            if self.val_data:
-                plt.plot(
+            loss_fig = generate_plot(
                     self.results["epochs"],
+                    self.results["train_loss"],
                     self.results["val_loss"],
-                    label="val"
-                )
-            plt.title("Loss Progression")
-            plt.xlabel("epochs")
-            plt.ylabel("Loss")
-            plt.legend(loc="upper right")
-
-            writer.add_figure("Loss", fig)
-            fig.savefig(Path(self.base_out_dir) / "loss.png")
+                    title="Loss Progression",
+                    y_label="loss"
+            )
+            writer.add_figure("Loss", loss_fig)
+            loss_fig.savefig(Path(self.base_out_dir) / "loss.png")
             plt.show()
-            plt.close(fig)
+            plt.close(loss_fig)
 
-            if (self.results["train_loss"][-1] <=
-                self.best_result["train_loss"] and
-                self.results["val_loss"][-1] < self.best_result["val_loss"]):
+            kappa_score_fig = generate_plot(
+                    self.results["epochs"],
+                    self.results["train_kappa"],
+                    self.results["val_kappa"],
+                    title="Cohen Kappa Score",
+                    y_label="CKS"
+            )
+            writer.add_figure("Cohen Kappa Score", kappa_score_fig)
+            loss_fig.savefig(Path(self.base_out_dir) / "kappa_score.png")
+            plt.show()
+            plt.close(kappa_score_fig)
 
-                self.best_result["train_loss"] = self.results["train_loss"][-1]
-                self.best_result["val_loss"] = self.results["val_loss"][-1]
+            if (self.results["train_kappa"][-1] <=
+                    self.best_result["train_kappa"] and
+                    self.results["val_kappa"][-1] < self.best_result["val_kappa"]):
+
+                self.best_result["train_kappa"] = self.results["train_kappa"][-1]
+                self.best_result["val_kappa"] = self.results["val_kappa"][-1]
                 self.best_result["state"] = {
                     "epoch": epoch,
                     "network_dict": deepcopy(self.network.state_dict()),
@@ -192,10 +200,10 @@ class DenseNetModel:
             if epoch % self.model_config.model_dump_gap == 0:
                 self.save_model(epoch)
 
-        print("Best results: Epoch{}, Train Loss: {}, Val Loss: {}".format(
+        print("Best results: Epoch{}, Train Cohen Kappa Score: {}, Val Cohen Kappa Score: {}".format(
             self.best_result["epoch"],
-            self.best_result["train_loss"],
-            self.best_result["val_loss"]
+            self.best_result["train_kappa"],
+            self.best_result["val_kappa"]
         ))
 
         model_save_dir = "best_model_{}.pth".format(
@@ -208,16 +216,18 @@ class DenseNetModel:
         )
 
         if self.test_data:
-            test_loss = self.test(self.test_data)
-            print("{} Epoch: {}, Test loss: {.4f}".format(
+            test_loss, test_kappa = self.test(self.test_data)
+            print("{} Epoch: {}, Test loss: {:.4f}, Test Cohen Kappa Score: {:.4f}".format(
                 time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime()),
                 epoch,
-                test_loss
+                test_loss,
+                test_kappa
             ))
 
     def test(self, data_set, ds_type=None):
         self.network = self.network.eval()
         running_loss = 0.0
+        running_kappa = 0.0
         total_count = 0
 
         with torch.no_grad():
@@ -230,10 +240,11 @@ class DenseNetModel:
                     target = batch_set["y"].to(self.device)
                 predictions = self.network(inputs)
                 loss = self.loss_function(predictions, target)
+                running_kappa += kappa_cohen(target, torch.sigmoid(predictions))
                 running_loss += loss.item()
                 total_count += 1
 
-        return (running_loss / total_count)
+        return (running_loss / total_count), (running_kappa / total_count)
 
     def predict(self, image_path):
         self.network = self.network.eval()
