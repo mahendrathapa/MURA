@@ -1,13 +1,20 @@
 import argparse
-import glob
 import json
-import os
 import time
+import torch
+
+import pandas as pd
+
+from pathlib import Path
+from collections import defaultdict
+from PIL import Image
 
 from src.architecture.densenet import Densenet
 from src.config.config import LocalConfig, ServerConfig
 from src.data.mura_dataset_loader import MuraDataSetLoader
 from src.model.DenseNet_model import DenseNetModel
+
+torch.manual_seed(123456789)
 
 
 def main():
@@ -49,6 +56,34 @@ def main():
         model = DenseNetModel(network, global_config, train_data, val_data)
         model.train()
 
+    elif global_config.mode == "predict":
+        results = defaultdict(list)
+        model = DenseNetModel(
+                network, global_config
+        )
+
+        predictions_path = (Path(model_config.OUTPUT_ROOT_PATH) / global_config.run_id / "predictions")
+        predictions_path.mkdir(exist_ok=True, parents=True)
+        
+        image_list = list()
+        image_path = Path(global_config.predict_data_dir)
+        for data_types in model_config.ACCEPTED_DATA_TYPES:
+            image_list.extend(image_path.glob(data_types))
+
+        for index, i in enumerate(image_list):
+            input_img_name = i.name
+            if not any(x in input_img_name for x in model_config.IGNORE_FILES):
+                image, label = model.predict(i)
+                print(input_img_name, label)
+                results['image'].append(input_img_name)
+                results['label'].append(label)
+                results['index'].append(index)
+                img_save_path = predictions_path / input_img_name
+                Image.fromarray(image, mode='L').save(img_save_path)
+        csv_save_path = predictions_path / "predictions.csv"
+        pd.DataFrame(results, index=results['index']).drop(columns='index').\
+            to_csv(csv_save_path, index=False)
+
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -63,7 +98,7 @@ def get_args():
     parser.add_argument(
         "--mode",
         default="full",
-        choices=["full", "train"],
+        choices=["full", "train", "predict"],
         type=str
     )
 

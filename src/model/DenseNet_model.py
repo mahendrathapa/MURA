@@ -61,7 +61,7 @@ class DenseNetModel:
         self.best_result = defaultdict(list)
 
         if self.config.model_checkpoint:
-            load_model()
+            self.load_model()
 
     def load_model(self):
         checkpoint_path = (
@@ -81,7 +81,7 @@ class DenseNetModel:
         )
 
     def save_model(self, epoch, tag=None):
-        print("Model saved for epoch {}".format("epoch"))
+        print("Model saved for epoch {}".format(epoch))
 
         if tag is not None:
             model_name = tag + str(epoch) + "_model.pth"
@@ -122,8 +122,8 @@ class DenseNetModel:
             self.network = self.network.train()
 
             for batch_set in self.train_data:
-                inputs = batch_set["x"].to(self.device)
-                target = batch_set["y"].to(self.device)
+                inputs = torch.cat((batch_set["positive_x"].to(self.device), batch_set["negative_x"].to(self.device)))
+                target = torch.cat((batch_set["positive_y"].to(self.device), batch_set["negative_y"].to(self.device)))
 
                 self.optimizer.zero_grad()
                 predictions = self.network(inputs)
@@ -131,11 +131,11 @@ class DenseNetModel:
                 loss.backward()
                 self.optimizer.step()
 
-            train_loss = self.test(self.train_data)
-            self.results["epochs"] = epoch
-            self.results["train_loss"] = train_loss
+            train_loss = self.test(self.train_data, ds_type="train_set")
+            self.results["epochs"].append(epoch)
+            self.results["train_loss"].append(train_loss)
 
-            print("{} Epoch: {}, Train loss: {.4f}".format(
+            print("{} Epoch: {}, Train loss: {:.4f}".format(
                 time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime()),
                 epoch,
                 train_loss
@@ -144,9 +144,9 @@ class DenseNetModel:
 
             if self.val_data:
                 val_loss = self.test(self.val_data)
-                self.results["val_loss"] = val_loss
+                self.results["val_loss"].append(val_loss)
 
-                print("{} EPoch: {}, Val loss: {.4f}".format(
+                print("{} Epoch: {}, Val loss: {:.4f}".format(
                     time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime()),
                     epoch,
                     val_loss
@@ -162,7 +162,7 @@ class DenseNetModel:
             )
             if self.val_data:
                 plt.plot(
-                    self.results["epoch"],
+                    self.results["epochs"],
                     self.results["val_loss"],
                     label="val"
                 )
@@ -215,15 +215,19 @@ class DenseNetModel:
                 test_loss
             ))
 
-    def test(self, test_data):
+    def test(self, data_set, ds_type=None):
         self.network = self.network.eval()
         running_loss = 0.0
         total_count = 0
 
         with torch.no_grad():
-            for batch_set in test_data:
-                inputs = test_data["x"].to(self.device)
-                target = test_data["y"].to(self.device)
+            for batch_set in data_set:
+                if ds_type == "train_set":
+                    inputs = torch.cat((batch_set["positive_x"].to(self.device), batch_set["negative_x"].to(self.device)))
+                    target = torch.cat((batch_set["positive_y"].to(self.device), batch_set["negative_y"].to(self.device)))
+                else:
+                    inputs = batch_set["x"].to(self.device)
+                    target = batch_set["y"].to(self.device)
                 predictions = self.network(inputs)
                 loss = self.loss_function(predictions, target)
                 running_loss += loss.item()
@@ -233,7 +237,7 @@ class DenseNetModel:
 
     def predict(self, image_path):
         self.network = self.network.eval()
-        image = get_image(image_path)
+        image = get_image(image_path, add_dim=True)
 
         with torch.no_grad():
             image = image.to(self.device)
@@ -241,4 +245,4 @@ class DenseNetModel:
 
             label = torch.sigmoid(predictions)
 
-            return label.item()
+            return image.squeeze(0).squeeze(0).cpu().numpy(), label.item()
