@@ -1,7 +1,8 @@
 import pandas as pd
-from pathlib import Path
 
 from torch.utils.data import DataLoader
+
+from src.constants import Constants
 from src.data.mura_dataset import ValMuraDataset, TrainMuraDataset
 
 
@@ -10,28 +11,34 @@ class MuraDataSetLoader:
     def __init__(self, config):
         self.config = config
 
-    def load_train_data(self):
+    def load_train_data(self, transformation=None):
 
-        train_positive_data = pd.read_csv(
-            Path(self.config.data_path) / "train_positive_data.csv")
+        train_positive_data = pd.read_csv(self.config.TRAIN_POS_DATA_CSV)
 
-        train_negative_data = pd.read_csv(
-            Path(self.config.data_path) / "train_negative_data.csv")
+        train_negative_data = pd.read_csv(self.config.TRAIN_NEG_DATA_CSV)
+        if transformation is not None:
+            pass
+            # TO DO: Add different transformation based on list of transformation arguments
+        else:
+            data_set = TrainMuraDataset(
+                    self.config,
+                    train_positive_data,
+                    train_negative_data,
+            )
+            return DataLoader(
+                data_set,
+                batch_size=self.config.TRAIN_BATCH_SIZE,
+                shuffle=self.config.TRAIN_SHUFFLE,
+                num_workers=self.config.TRAIN_WORKERS
+            )
 
-        return DataLoader(TrainMuraDataset(train_positive_data,
-                                           train_negative_data),
-                          batch_size=int(
-                              self.config.TRAIN_BATCH_SIZE / 2),
-                          shuffle=self.config.TRAIN_SHUFFLE,
-                          num_workers=self.config.TRAIN_WORKERS)
+    def load_val_data(self, transformation=None):
 
-    def load_val_data(self):
+        val_data = pd.read_csv(self.config.VAL_DATA_CSV)
 
-        val_data = pd.read_csv(
-            Path(self.config.data_path) / "val_data.csv")
-
-        return DataLoader(ValMuraDataset(val_data),
-                          batch_size=int(
-                              self.config.VAL_BATCH_SIZE / 2),
-                          shuffle=self.config.VAL_SHUFFLE,
-                          num_workers=self.config.VAL_WORKERS)
+        return DataLoader(
+            ValMuraDataset(self.config, val_data),
+            batch_size=self.config.VAL_BATCH_SIZE,
+            shuffle=self.config.VAL_SHUFFLE,
+            num_workers=self.config.VAL_WORKERS
+        )
