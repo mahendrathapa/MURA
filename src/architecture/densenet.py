@@ -100,6 +100,8 @@ class Densenet(nn.Module):
             bias=False
         )
 
+        self.max_pool = nn.MaxPool2d(3, stride=2, padding=1)
+
         # Dense block -> TransitionBlock
         in_channel = 2 * growth_rate
 
@@ -155,14 +157,14 @@ class Densenet(nn.Module):
                 m.bias.data.zero_()
 
     def forward(self, x):
-        out1 = self.conv1(x)
+        out1 = self.max_pool(self.conv1(x))
         out2 = self.trans1(self.block1(out1))
         out3 = self.trans2(self.block2(out2))
         out4 = self.trans3(self.block3(out3))
         out5 = self.block4(out4)
         out6 = self.relu(self.norm1(out5))
-        out7 = nn.functional.avg_pool2d(
-            out6, kernel_size=Constants.IMAGE_SIZE // 16
+        out7 = nn.functional.adaptive_avg_pool2d(
+            out6, (1, 1)
         )
         out = out7.view(-1, self.channels)
         return self.fc1(out)
