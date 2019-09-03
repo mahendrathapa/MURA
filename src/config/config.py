@@ -14,8 +14,8 @@ class Config:
     VAL_DATA_CSV = "val_data.csv"
     JSON_CONFIG = "config.json"
     JSON_INDENT = 4
-    ACCEPTED_DATA_TYPES = ["/*.png", "/*.jpg"]
-    # IGNORE_FILES = ["edge", "annotated"]
+    ACCEPTED_DATA_TYPES = ["*.png", "*.jpg"]
+    IGNORE_FILES = ["csv"]
 
     ROOT_PATH = os.path.join(os.getcwd(), ROOT_DIR)
     OUTPUT_ROOT_PATH = os.path.join(ROOT_PATH, OUT_DIR)
@@ -23,7 +23,7 @@ class Config:
 
     TRAIN_DATA_DIR = os.path.join(DATA_ROOT_PATH, TRAIN_DIR)
     VAL_DATA_DIR = os.path.join(DATA_ROOT_PATH, VAL_DIR)
-    # TEST_DATA_DIR = os.path.join(DATA_ROOT_PATH, TEST_DIR)
+    # TEST_DATA_DIR = os.path.join(DATA_ROOT_PATH, "test")
 
     TRAIN_POS_DATA_CSV = os.path.join(
             DATA_ROOT_PATH,
@@ -92,5 +92,6 @@ class ServerConfig(Config):
             train_num_workers=os.cpu_count(),
             val_num_workers=os.cpu_count(),
             test_num_workers=os.cpu_count(),
+            sampling_ratio=1.0,
             model_dump_gap=100
         )
