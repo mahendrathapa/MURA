@@ -1,6 +1,9 @@
+from src.config.config import Config
+
+
 def kappa_cohen(ground_truth, predictions, verbose=False):
-    ground_truth = ground_truth.view(-1).byte()
-    predictions = predictions.view(-1).byte()
+    ground_truth = ground_truth.view(-1) >= Config.CUT_OFF_THRESHOLD
+    predictions = predictions.view(-1) >= Config.CUT_OFF_THRESHOLD
 
     ground_truth_c = ground_truth ^ 1
     predictions_c = predictions ^ 1

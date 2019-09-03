@@ -16,6 +16,7 @@ class Config:
     JSON_INDENT = 4
     ACCEPTED_DATA_TYPES = ["*.png", "*.jpg"]
     IGNORE_FILES = ["csv"]
+    CUT_OFF_THRESHOLD = 0.5
 
     ROOT_PATH = os.path.join(os.getcwd(), ROOT_DIR)
     OUTPUT_ROOT_PATH = os.path.join(ROOT_PATH, OUT_DIR)
