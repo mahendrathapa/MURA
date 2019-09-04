@@ -22,6 +22,7 @@ class DenseNetModel:
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
         )
+        print(f"Device in use: {self.device}")
         self.network = network.to(self.device)
         self.train_data = train_data
         self.val_data = val_data
@@ -83,12 +84,11 @@ class DenseNetModel:
         )
 
     def save_model(self, epoch, tag=None):
-        print("Model saved for epoch {}".format(epoch))
 
         if tag is not None:
-            model_name = tag + str(epoch) + "_model.pth"
+            model_name = f"epoch_{epoch}_iter_{tag}_model.pth"
         else:
-            model_name = str(epoch) + "_model.pth"
+            model_name = f"{epoch}_model.pth"
 
         state = {
             "epoch": epoch,
@@ -101,6 +101,7 @@ class DenseNetModel:
             state,
             Path(self.model_out_dir) / model_name
         )
+        print(f"Model saved as {model_name}")
 
     def train(self):
         img_size = Constants.IMAGE_SIZE
@@ -123,7 +124,7 @@ class DenseNetModel:
         for epoch in range(start, end):
             self.network = self.network.train()
 
-            for batch_set in self.train_data:
+            for iteration, batch_set in enumerate(self.train_data):
                 inputs = torch.cat((batch_set["positive_x"].to(self.device), batch_set["negative_x"].to(self.device)))
                 target = torch.cat((batch_set["positive_y"].to(self.device), batch_set["negative_y"].to(self.device)))
 
@@ -133,72 +134,73 @@ class DenseNetModel:
                 loss.backward()
                 self.optimizer.step()
 
-            train_loss, train_kappa = self.test(self.train_data, ds_type="train_set")
-            self.results["epochs"].append(epoch)
-            self.results["train_loss"].append(train_loss)
-            self.results["train_kappa"].append(train_kappa)
+                if iteration % self.model_config.model_dump_gap == 0:
+                    train_loss, train_kappa = self.test(self.train_data, ds_type="train_set")
+                    self.results["epochs"].append(epoch)
+                    self.results["train_loss"].append(train_loss)
+                    self.results["train_kappa"].append(train_kappa)
 
-            print("{} Epoch: {}, Train loss: {:.4f}, Train Cohen Kappa Score: {:.4f}".format(
-                time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime()),
-                epoch,
-                train_loss,
-                train_kappa
-            ))
-            writer.add_scalars("Loss", {"train_loss": train_loss}, epoch)
+                    print("{} Epoch: {}, Iteration: {}, Train loss: {:.4f}, Train Cohen Kappa Score: {:.4f}".format(
+                        time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime()),
+                        epoch,
+                        iteration+1,
+                        train_loss,
+                        train_kappa
+                    ))
+                    writer.add_scalars("Loss", {"train_loss": train_loss}, epoch)
 
-            if self.val_data:
-                val_loss, val_kappa = self.test(self.val_data)
-                self.results["val_loss"].append(val_loss)
-                self.results["val_kappa"].append(val_kappa)
+                    if self.val_data:
+                        val_loss, val_kappa = self.test(self.val_data)
+                        self.results["val_loss"].append(val_loss)
+                        self.results["val_kappa"].append(val_kappa)
 
-                print("{} Epoch: {}, Val loss: {:.4f}, Val Cohen Kappa Score: {:.4f}".format(
-                    time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime()),
-                    epoch,
-                    val_loss,
-                    val_kappa
-                ))
-                writer.add_scalars("Loss", {"val_loss": val_loss}, epoch)
+                        print("{} Epoch: {}, Iteration: {}, Val loss: {:.4f}, Val Cohen Kappa Score: {:.4f}".format(
+                            time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime()),
+                            epoch,
+                            iteration+1,
+                            val_loss,
+                            val_kappa
+                        ))
+                        writer.add_scalars("Loss", {"val_loss": val_loss}, epoch)
 
-            # Now plotting
-            loss_fig = generate_plot(
-                    self.results["epochs"],
-                    self.results["train_loss"],
-                    self.results["val_loss"],
-                    title="Loss Progression",
-                    y_label="loss"
-            )
-            writer.add_figure("Loss", loss_fig)
-            loss_fig.savefig(Path(self.base_out_dir) / "loss.png")
-            plt.show()
-            plt.close(loss_fig)
+                    # Now plotting
+                    loss_fig = generate_plot(
+                            self.results["epochs"],
+                            self.results["train_loss"],
+                            self.results["val_loss"],
+                            title="Loss Progression",
+                            y_label="loss"
+                    )
+                    writer.add_figure("Loss", loss_fig)
+                    loss_fig.savefig(Path(self.base_out_dir) / "loss.png")
+                    plt.show()
+                    plt.close(loss_fig)
 
-            kappa_score_fig = generate_plot(
-                    self.results["epochs"],
-                    self.results["train_kappa"],
-                    self.results["val_kappa"],
-                    title="Cohen Kappa Score",
-                    y_label="CKS"
-            )
-            writer.add_figure("Cohen Kappa Score", kappa_score_fig)
-            loss_fig.savefig(Path(self.base_out_dir) / "kappa_score.png")
-            plt.show()
-            plt.close(kappa_score_fig)
+                    kappa_score_fig = generate_plot(
+                            self.results["epochs"],
+                            self.results["train_kappa"],
+                            self.results["val_kappa"],
+                            title="Cohen Kappa Score",
+                            y_label="CKS"
+                    )
+                    writer.add_figure("Cohen Kappa Score", kappa_score_fig)
+                    loss_fig.savefig(Path(self.base_out_dir) / "kappa_score.png")
+                    plt.show()
+                    plt.close(kappa_score_fig)
 
-            if (self.results["train_kappa"][-1] <=
-                    self.best_result["train_kappa"] and
-                    self.results["val_kappa"][-1] < self.best_result["val_kappa"]):
+                    if (self.results["train_kappa"][-1] <=
+                            self.best_result["train_kappa"] and
+                            self.results["val_kappa"][-1] < self.best_result["val_kappa"]):
 
-                self.best_result["train_kappa"] = self.results["train_kappa"][-1]
-                self.best_result["val_kappa"] = self.results["val_kappa"][-1]
-                self.best_result["state"] = {
-                    "epoch": epoch,
-                    "network_dict": deepcopy(self.network.state_dict()),
-                    "optimizer_dict": deepcopy(self.optimizer.state_dict()),
-                    "results": deepcopy(self.results)
-                }
-
-            if epoch % self.model_config.model_dump_gap == 0:
-                self.save_model(epoch)
+                        self.best_result["train_kappa"] = self.results["train_kappa"][-1]
+                        self.best_result["val_kappa"] = self.results["val_kappa"][-1]
+                        self.best_result["state"] = {
+                            "epoch": epoch,
+                            "network_dict": deepcopy(self.network.state_dict()),
+                            "optimizer_dict": deepcopy(self.optimizer.state_dict()),
+                            "results": deepcopy(self.results)
+                        }
+                    self.save_model(epoch, tag=iteration+1)
 
         print("Best results: Epoch{}, Train Cohen Kappa Score: {}, Val Cohen Kappa Score: {}".format(
             self.best_result["epoch"],
