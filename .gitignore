@@ -8,5 +8,6 @@ __pycache__/
 
 # Data File
 src/data/MURA-v1.1
+src/out
 
 
