@@ -231,6 +231,8 @@ class DenseNetModel:
         running_loss = 0.0
         running_kappa = 0.0
         total_count = 0
+        target_list = list()
+        predictions_list = list()
 
         with torch.no_grad():
             for batch_set in data_set:
@@ -240,13 +242,23 @@ class DenseNetModel:
                 else:
                     inputs = batch_set["x"].to(self.device)
                     target = batch_set["y"].to(self.device)
+
                 predictions = self.network(inputs)
+
+                target_list.append(target)
+                predictions_list.append(torch.sigmoid(predictions))
+
                 loss = self.loss_function(predictions, target)
-                running_kappa += kappa_cohen(target, torch.sigmoid(predictions))
+
                 running_loss += loss.item()
                 total_count += 1
 
-        return (running_loss / total_count), (running_kappa / total_count)
+            running_kappa = kappa_cohen(
+                    torch.cat(target_list),
+                    torch.cat(predictions_list)
+            )
+
+        return (running_loss / total_count), running_kappa
 
     def predict(self, image_path):
         self.network = self.network.eval()
