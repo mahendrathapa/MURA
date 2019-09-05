@@ -110,6 +110,8 @@ class DenseNetModel:
             Path(self.base_out_dir) / "tensorboard"
         )
 
+        total_data = (len(self.train_data) * 2 * self.model_config.TRAIN_BATCH_SIZE) / self.model_config.SAMPLING_RATIO
+        print(f"Final total data: {total_data}")
         print(f"Run ID : {self.config.run_id}")
         print("Training started at: {}".format(
             time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime())
@@ -134,7 +136,8 @@ class DenseNetModel:
                 loss.backward()
                 self.optimizer.step()
 
-                if iteration % self.model_config.model_dump_gap == 0:
+                if iteration % self.model_config.model_dump_gap == 0 \
+                        and iteration != 0:
                     train_loss, train_kappa = self.test(self.train_data, ds_type="train_set")
                     self.results["epochs"].append(epoch)
                     self.results["train_loss"].append(train_loss)
@@ -143,7 +146,7 @@ class DenseNetModel:
                     print("{} Epoch: {}, Iteration: {}, Train loss: {:.4f}, Train Cohen Kappa Score: {:.4f}".format(
                         time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime()),
                         epoch,
-                        iteration+1,
+                        iteration,
                         train_loss,
                         train_kappa
                     ))
@@ -157,7 +160,7 @@ class DenseNetModel:
                         print("{} Epoch: {}, Iteration: {}, Val loss: {:.4f}, Val Cohen Kappa Score: {:.4f}".format(
                             time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime()),
                             epoch,
-                            iteration+1,
+                            iteration,
                             val_loss,
                             val_kappa
                         ))
@@ -200,7 +203,7 @@ class DenseNetModel:
                             "optimizer_dict": deepcopy(self.optimizer.state_dict()),
                             "results": deepcopy(self.results)
                         }
-                    self.save_model(epoch, tag=iteration+1)
+                    self.save_model(epoch, tag=iteration)
 
         print("Best results: Epoch{}, Train Cohen Kappa Score: {}, Val Cohen Kappa Score: {}".format(
             self.best_result["epoch"],
