@@ -13,6 +13,7 @@ from src.architecture.densenet import Densenet
 from src.config.config import LocalConfig, ServerConfig
 from src.data.mura_dataset_loader import MuraDataSetLoader
 from src.model.DenseNet_model import DenseNetModel
+from src.constants import Constants
 
 torch.manual_seed(123456789)
 
@@ -64,7 +65,7 @@ def main():
 
         predictions_path = (Path(model_config.OUTPUT_ROOT_PATH) / global_config.run_id / "predictions")
         predictions_path.mkdir(exist_ok=True, parents=True)
-        
+
         image_list = list()
         image_path = Path(global_config.predict_data_dir)
         for data_types in model_config.ACCEPTED_DATA_TYPES:
