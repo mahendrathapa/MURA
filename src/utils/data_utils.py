@@ -10,7 +10,7 @@ from src.constants import Constants
 random.seed(123456789)
 
 
-def get_image(image_path, transform=None, unsqueeze_dim=1):
+def get_image(image_path, transforms=None, unsqueeze_dim=1):
 
     image = Image.open(image_path).convert('L')
 
@@ -19,15 +19,15 @@ def get_image(image_path, transform=None, unsqueeze_dim=1):
     )
     image = resize_tf(image)
 
-    if transform is not None:
-        for tr in transform:
-            image = tr(image)
+    if transforms is not None:
+        for transform in transforms:
+            image = transform(image)
 
     image = np.array(image)
     image = image.astype('float')
 
     if Constants.NORMALIZE:
-        image = image - np.mean()
+        image = image - np.mean(image)
 
     image = torch.from_numpy(image).float()
 
@@ -42,13 +42,16 @@ def get_transforms(transform):
     transform_dict = dict()
     transform_dict["flip"] = pytorch_transforms.RandomHorizontalFlip(p=1.0)
     transform_dict["jitter"] = pytorch_transforms.ColorJitter(
-        brightness=0.5, contrast=0.5, saturation=0, hue=0
+                                brightness=0.5,
+                                contrast=0.5,
+                                saturation=0,
+                                hue=0
     )
     transform_dict["rotate"] = pytorch_transforms.RandomRotation(
-            (-10, 10),
-            resample=False,
-            expand=False,
-            center=None
+                                (-10, 10),
+                                resample=False,
+                                expand=False,
+                                center=None
     )
     transform_dict["compose"] = list()
     for transform_type, prob in Constants.COMPOSE_PROBABILITIES.items():
