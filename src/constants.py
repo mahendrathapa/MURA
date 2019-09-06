@@ -10,6 +10,8 @@ class Constants:
 
     TRANSFORMATIONS = ["flip", "jitter", "rotate", "compose"]
 
-    COMPOSE_PROBABILITIES = OrderedDict(
-            {"flip": 0.5, "jitter": 0, "rotate": 0.5}
-    )
+    COMPOSE_PROBABILITIES = OrderedDict({
+        "flip": 0.5,
+        "jitter": 0,
+        "rotate": 0.5
+    })
