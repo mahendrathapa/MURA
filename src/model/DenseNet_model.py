@@ -121,7 +121,6 @@ class DenseNetModel:
         )
 
         total_data = (len(self.train_data) * 2 * self.model_config.TRAIN_BATCH_SIZE) / self.model_config.SAMPLING_RATIO
-        print(f"Final total data: {total_data}")
         print(f"Run ID : {self.config.run_id}")
         print("Training started at: {}".format(
             time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime())
