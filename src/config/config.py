@@ -87,9 +87,9 @@ class LocalConfig(Config):
 class ServerConfig(Config):
     def __init__(self):
         super().__init__(
-            train_batch_size=48,
-            test_batch_size=48,
-            val_batch_size=48,
+            train_batch_size=64,
+            test_batch_size=64,
+            val_batch_size=64,
             train_num_workers=os.cpu_count() * 2,
             val_num_workers=os.cpu_count() * 2,
             test_num_workers=os.cpu_count() * 2,
