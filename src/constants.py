@@ -12,6 +12,8 @@ class Constants:
 
     NORMALIZE = True
 
+    LR_DECAY = {"no_of_epochs": 4, "factor": 0.1}
+
     TRANSFORMATIONS = ["flip", "jitter", "rotate", "compose"]
 
     COMPOSE_PROBABILITIES = OrderedDict({
