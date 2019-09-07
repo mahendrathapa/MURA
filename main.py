@@ -80,7 +80,7 @@ def main():
                 results['label'].append(label)
                 results['index'].append(index)
                 img_save_path = predictions_path / input_img_name
-                Image.fromarray(image, mode='L').save(img_save_path)
+                Image.fromarray(image).convert('L').save(img_save_path)
         csv_save_path = predictions_path / "predictions.csv"
         pd.DataFrame(results, index=results['index']).drop(columns='index').\
             to_csv(csv_save_path, index=False)
