@@ -36,6 +36,7 @@ def main():
             global_config.model_config_json))
 
     model_config = global_config.model_config
+    print(f"Sampling Ratio: {model_config.SAMPLING_RATIO}")
     dataset_loader = MuraDataSetLoader(model_config)
 
     if global_config.mode == "full":

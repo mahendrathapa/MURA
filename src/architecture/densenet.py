@@ -89,6 +89,7 @@ class Densenet(nn.Module):
         super().__init__()
 
         block_config = Constants.DENSE_BLOCK_STRUCTURE
+        print(f"DenseNet Structure: {block_config}")
 
         # Initial convolution
         self.conv1 = nn.Conv2d(
