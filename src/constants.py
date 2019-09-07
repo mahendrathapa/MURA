@@ -11,6 +11,8 @@ class Constants:
     IMAGE_SIZE = 320
 
     NORMALIZE = True
+    
+    GLOBAL_MEAN = 52.60
 
     LR_DECAY = {"no_of_epochs": 4, "factor": 0.1}
 
