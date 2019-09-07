@@ -47,7 +47,7 @@ class TrainMuraDataset(Dataset):
 
     def __getitem__(self, idx):
 
-        positive_row = self.positive_label_data.iloc[idx]
+        positive_row = self.positive_label_data.iloc[idx // len(self.positive_label_data)]
         positive_row_path = (
             Path(self.model_config.data_path) / positive_row['image_path']
         )

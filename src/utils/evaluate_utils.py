@@ -13,7 +13,7 @@ def kappa_cohen(ground_truth, predictions, verbose=False):
     fp = (ground_truth_c & predictions).sum().item()
     fn = (ground_truth & predictions_c).sum().item()
     total = (tp + tn + fp + fn)
-    assert total is len(ground_truth) is len(predictions), "error in calculation of tp, tn, fp or fn"
+    assert total==len(ground_truth)==len(predictions), "error in calculation of tp, tn, fp or fn"
 
     observed_agreement = (tp+tn) / total
     expected_yes = ((tp + fp) / total) * ((tp + fn) / total)

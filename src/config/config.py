@@ -87,12 +87,12 @@ class LocalConfig(Config):
 class ServerConfig(Config):
     def __init__(self):
         super().__init__(
-            train_batch_size=16,
-            test_batch_size=16,
-            val_batch_size=16,
-            train_num_workers=os.cpu_count(),
-            val_num_workers=os.cpu_count(),
-            test_num_workers=os.cpu_count(),
-            sampling_ratio=1.0,
+            train_batch_size=64,
+            test_batch_size=64,
+            val_batch_size=64,
+            train_num_workers=os.cpu_count() * 2,
+            val_num_workers=os.cpu_count() * 2,
+            test_num_workers=os.cpu_count() * 2,
+            sampling_ratio=1.47,
             model_dump_gap=100
         )

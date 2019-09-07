@@ -23,6 +23,10 @@ class DenseNetModel:
             "cuda" if torch.cuda.is_available() else "cpu"
         )
         print(f"Device in use: {self.device}")
+        if torch.cuda.device_count() > 1:
+            print("GPUs in use:  ", torch.cuda.device_count())
+            network = torch.nn.DataParallel(network)
+
         self.network = network.to(self.device)
         self.train_data = train_data
         self.val_data = val_data
@@ -37,6 +41,12 @@ class DenseNetModel:
         )
 
         self.loss_function = functional.binary_cross_entropy_with_logits
+
+        self.scheduler = torch.optim.lr_scheduler.StepLR(
+                self.optimizer,
+                step_size=Constants.LR_DECAY["no_of_epochs"],
+                gamma=Constants.LR_DECAY["factor"]
+        )
 
         self.start_epoch = 1
         self.base_out_dir = (
@@ -111,7 +121,6 @@ class DenseNetModel:
         )
 
         total_data = (len(self.train_data) * 2 * self.model_config.TRAIN_BATCH_SIZE) / self.model_config.SAMPLING_RATIO
-        print(f"Final total data: {total_data}")
         print(f"Run ID : {self.config.run_id}")
         print("Training started at: {}".format(
             time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime())
@@ -129,7 +138,6 @@ class DenseNetModel:
             for iteration, batch_set in enumerate(self.train_data):
                 inputs = torch.cat((batch_set["positive_x"].to(self.device), batch_set["negative_x"].to(self.device)))
                 target = torch.cat((batch_set["positive_y"].to(self.device), batch_set["negative_y"].to(self.device)))
-
                 self.optimizer.zero_grad()
                 predictions = self.network(inputs)
                 loss = self.loss_function(predictions, target)
@@ -139,10 +147,11 @@ class DenseNetModel:
                 if iteration % self.model_config.model_dump_gap == 0 \
                         and iteration != 0:
                     train_loss, train_kappa = self.test(self.train_data, ds_type="train_set")
-                    self.results["epochs"].append(epoch)
+                    self.results["epochs"].append(epoch + iteration / len(self.train_data))
                     self.results["train_loss"].append(train_loss)
                     self.results["train_kappa"].append(train_kappa)
 
+                    print("lr: {:.2E}".format(self.optimizer.param_groups[0]['lr']))
                     print("{} Epoch: {}, Iteration: {}, Train loss: {:.4f}, Train Cohen Kappa Score: {:.4f}".format(
                         time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime()),
                         epoch,
@@ -204,6 +213,8 @@ class DenseNetModel:
                             "results": deepcopy(self.results)
                         }
                     self.save_model(epoch, tag=iteration)
+
+            self.scheduler.step()
 
         print("Best results: Epoch{}, Train Cohen Kappa Score: {}, Val Cohen Kappa Score: {}".format(
             self.best_result["epoch"],
