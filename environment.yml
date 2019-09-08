@@ -123,4 +123,5 @@ dependencies:
     - tensorboardx==1.8
     - torchsummary==1.5.1
     - werkzeug==0.15.5
+    - Flask==1.1.1
 prefix: /home/fm-lt-121/miniconda3/envs/mura
