@@ -17,6 +17,21 @@ def get_image(image_path, transforms=None, unsqueeze_dim=1):
 
     image = Image.open(image_path).convert('L')
 
+    if Constants.PRETRAINED:
+        image = np.array(image)
+        image_3c = np.zeros((*image.shape, 3))
+        image_3c[:, :, 0], image_3c[:, :, 1], image_3c[:, :, 2] = image, image, image
+        normalize = pytorch_transforms.Compose([
+            pytorch_transforms.ToTensor(),
+            pytorch_transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225]
+            ),
+            pytorch_transforms.ToPILImage(mode='RGB')
+        ])
+        image_3c = Image.fromarray(image_3c.astype('uint8'), mode='RGB')
+        image = normalize(image_3c)
+
     resize_tf = pytorch_transforms.Resize(
             (Constants.IMAGE_SIZE, Constants.IMAGE_SIZE)
     )
@@ -32,9 +47,12 @@ def get_image(image_path, transforms=None, unsqueeze_dim=1):
     if Constants.NORMALIZE:
         image = image - Constants.GLOBAL_MEAN
 
+    if Constants.PRETRAINED:
+        image = np.moveaxis(image, -1, 0)
+
     image = torch.from_numpy(image).float()
 
-    if unsqueeze_dim:
+    if unsqueeze_dim and not Constants.PRETRAINED:
         for _ in range(unsqueeze_dim):
             image = image.unsqueeze(0)
 
@@ -67,8 +85,9 @@ def get_transforms(transform):
     except KeyError:
         print("Required transformation is not available")
 
+
 def get_global_mean(verbose=False):
-    config  = ServerConfig()
+    config = ServerConfig()
     train_positive_data = pd.read_csv(config.TRAIN_POS_DATA_CSV)
     train_negative_data = pd.read_csv(config.TRAIN_NEG_DATA_CSV)
     data = pd.concat([train_positive_data, train_negative_data], ignore_index=True)
