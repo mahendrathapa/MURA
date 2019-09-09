@@ -5,6 +5,7 @@ from copy import deepcopy
 from matplotlib import cm
 
 from src.utils.data_utils import get_image
+from src.constants import Constants
 
 def get_cam(model, to_predict, final_conv_layer='conv', fc_layer='fc'):
     features = list()
@@ -48,8 +49,9 @@ def get_cam(model, to_predict, final_conv_layer='conv', fc_layer='fc'):
 
     colormap = cm.get_cmap('jet')
     heatmap = colormap(cam)
-    heatmap *= 255
-    image_heatmap = 0.8 * image_original + 0.2 * heatmap
+    heatmap = np.uint8(heatmap[:, :, :3] * 255)
+    image_heatmap = 0.2 * heatmap + 0.8 * np.expand_dims(image_original, -1)
+    image_heatmap = np.uint8(image_heatmap)
 
     result = {
         "image": image_original,

@@ -80,21 +80,21 @@ def main():
                     model, image, "relu", "fc1"
                 )
 
-                print(input_img_name, cam_result.label)
+                print(input_img_name, cam_result['label'])
                 results['image'].append(input_img_name)
-                results['label'].append(cam_result.label)
+                results['label'].append(cam_result['label'])
                 results['index'].append(index)
 
                 img_save_path = predictions_path / input_img_name
                 hmap_save_path = predictions_path / f"heatmap_{input_img_name}"
 
                 Image.fromarray(
-                    cam_result.image
+                    cam_result['image']
                 ).convert('L').save(img_save_path)
 
                 Image.fromarray(
-                    cam_result.heatmap
-                ).convert('L').save(hmap_save_path)
+                    cam_result['heatmap']
+                ).save(hmap_save_path)
 
         csv_save_path = predictions_path / "predictions.csv"
         pd.DataFrame(results, index=results['index']).drop(columns='index').\
