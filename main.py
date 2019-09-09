@@ -11,9 +11,10 @@ from PIL import Image
 
 from src.architecture.densenet import Densenet
 from src.config.config import LocalConfig, ServerConfig
+from src.constants import Constants
 from src.data.mura_dataset_loader import MuraDataSetLoader
 from src.model.DenseNet_model import DenseNetModel
-from src.constants import Constants
+from src.utils.heatmap import get_cam
 
 torch.manual_seed(123456789)
 
@@ -72,16 +73,29 @@ def main():
         for data_types in model_config.ACCEPTED_DATA_TYPES:
             image_list.extend(image_path.glob(data_types))
 
-        for index, i in enumerate(image_list):
-            input_img_name = i.name
+        for index, image in enumerate(image_list):
+            input_img_name = image.name
             if not any(x in input_img_name for x in model_config.IGNORE_FILES):
-                image, label = model.predict(i)
-                print(input_img_name, label)
+                cam_result = get_cam(
+                    model, image, "relu", "fc1"
+                )
+
+                print(input_img_name, cam_result.label)
                 results['image'].append(input_img_name)
-                results['label'].append(label)
+                results['label'].append(cam_result.label)
                 results['index'].append(index)
+
                 img_save_path = predictions_path / input_img_name
-                Image.fromarray(image).convert('L').save(img_save_path)
+                hmap_save_path = predictions_path / f"heatmap_{input_img_name}"
+
+                Image.fromarray(
+                    cam_result.image
+                ).convert('L').save(img_save_path)
+
+                Image.fromarray(
+                    cam_result.heatmap
+                ).convert('L').save(hmap_save_path)
+
         csv_save_path = predictions_path / "predictions.csv"
         pd.DataFrame(results, index=results['index']).drop(columns='index').\
             to_csv(csv_save_path, index=False)
