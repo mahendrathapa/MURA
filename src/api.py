@@ -1,9 +1,8 @@
-import os
 import time
 from pathlib import Path
 from PIL import Image
 
-from flask import Flask, request
+from flask import Flask, request, send_from_directory
 import torch
 from werkzeug.utils import secure_filename
 
@@ -11,7 +10,9 @@ from src.constants import Constants
 from src.utils.predict import load_network, predict_with_cam
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'src/out/uploads'
+app.config['UPLOAD_FOLDER'] = Path('src/out/uploads')
+app.config['UPLOAD_FOLDER'].mkdir(parents=True, exist_ok=True)
+
 
 device = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
@@ -23,12 +24,12 @@ model_path = Path('src/out') / Constants.RUN_ID / \
 network = load_network(model_path, device)
 
 
-def make_dir(upload_dir):
+@app.route('/image/<path:image_name>', methods=['GET'])
+def get_image(image_name):
 
-    upload_path = (Path(upload_dir)) / str(int(time.time()))
-    upload_path.mkdir(parents=True, exist_ok=True)
-
-    return upload_path
+    return send_from_directory(app.config['UPLOAD_FOLDER'].absolute(),
+                               image_name,
+                               as_attachment=True)
 
 
 @app.route('/predict', methods=['POST'])
@@ -36,12 +37,15 @@ def get_result():
 
     if request.method == 'POST' and request.files['image']:
 
-        predictions_path = make_dir(app.config['UPLOAD_FOLDER'])
+        run_id = str(int(time.time()))
 
         image = request.files['image']
 
-        image_name = secure_filename(image.name)
-        img_save_path = predictions_path / secure_filename(image_name)
+        image_name = secure_filename(image.filename)
+
+        original_save_path = f'{run_id}_{image_name}'
+        img_save_path = app.config['UPLOAD_FOLDER'] / original_save_path
+
         image.save(str(img_save_path))
 
         prediction_result = predict_with_cam(
@@ -52,17 +56,14 @@ def get_result():
             device=device
         )
 
-        original_save_path = predictions_path / "original_image.png"
-        predicted_save_path = predictions_path / "predicted_image.png"
+        predicted_save_path = f'{run_id}_predict_{image_name}'
 
-        Image.fromarray(prediction_result['image']).convert(
-            'L').save(original_save_path)
-
-        Image.fromarray(prediction_result['heatmap']).save(predicted_save_path)
+        Image.fromarray(prediction_result['heatmap']).save(
+            app.config['UPLOAD_FOLDER'] / predicted_save_path)
 
         result = {}
-        result['original_image'] = os.path.abspath(original_save_path)
-        result['heatmap_image'] = os.path.abspath(predicted_save_path)
+        result['original_image'] = str(original_save_path)
+        result['predict_image'] = str(predicted_save_path)
         result['label'] = prediction_result['label']
 
         return result
