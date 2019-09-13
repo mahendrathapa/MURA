@@ -4,9 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { Layout, Menu, Button } from 'antd';
 import { useDropzone } from 'react-dropzone';
 import Axios from 'axios';
+import { BASE_URL } from './constant';
+
 const { Header, Content } = Layout;
+
 function App() {
-  const BASE_URL = "http://172.16.5.220:8000"
+
   const thumbsContainer = {
     display: 'flex',
     flexDirection: 'row',
