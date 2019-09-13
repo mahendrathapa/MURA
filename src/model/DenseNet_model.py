@@ -115,7 +115,10 @@ class DenseNetModel:
 
     def train(self):
         img_size = Constants.IMAGE_SIZE
-        summary(self.network, (1, img_size, img_size))
+        if not Constants.PRETRAINED:
+            summary(self.network, (1, img_size, img_size))
+        else:
+            summary(self.network, (3, img_size, img_size))
         writer = SummaryWriter(
             Path(self.base_out_dir) / "tensorboard"
         )

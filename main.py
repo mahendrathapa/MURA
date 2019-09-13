@@ -10,6 +10,7 @@ from collections import defaultdict
 from PIL import Image
 
 from src.architecture.densenet import Densenet
+from src.architecture.pretrained_densetnet import PretrainedDensenet
 from src.config.config import LocalConfig, ServerConfig
 from src.constants import Constants
 from src.data.mura_dataset_loader import MuraDataSetLoader
@@ -20,7 +21,11 @@ torch.manual_seed(123456789)
 
 
 def main():
-    network = Densenet()
+    print(f"PRETRAINED MODE: {Constants.PRETRAINED}")
+    if Constants.PRETRAINED:
+        network = PretrainedDensenet()
+    else:
+        network = Densenet()
     global_config = get_args()
 
     if global_config.env == "server":

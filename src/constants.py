@@ -2,6 +2,8 @@ from collections import OrderedDict
 
 
 class Constants:
+    PRETRAINED = False
+
     DENSE_NET = {
             "densenet-169": (6, 12, 32, 32),
             "densenet-121": (6, 12, 24, 16)
@@ -10,8 +12,8 @@ class Constants:
 
     IMAGE_SIZE = 320
 
-    NORMALIZE = True
-    
+    NORMALIZE = False if PRETRAINED else True
+
     GLOBAL_MEAN = 52.60
 
     LR_DECAY = {"no_of_epochs": 4, "factor": 0.1}
