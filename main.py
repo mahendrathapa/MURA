@@ -12,10 +12,9 @@ from PIL import Image
 from src.architecture.densenet import Densenet
 from src.architecture.pretrained_densetnet import PretrainedDensenet
 from src.config.config import LocalConfig, ServerConfig
-from src.constants import Constants
 from src.data.mura_dataset_loader import MuraDataSetLoader
 from src.model.DenseNet_model import DenseNetModel
-from src.utils.heatmap import get_cam
+from src.utils.predict import predict_with_cam
 
 torch.manual_seed(123456789)
 
@@ -67,10 +66,12 @@ def main():
     elif global_config.mode == "predict":
         results = defaultdict(list)
         model = DenseNetModel(
-                network, global_config
+            network, global_config
         )
 
-        predictions_path = (Path(model_config.OUTPUT_ROOT_PATH) / global_config.run_id / "predictions")
+        predictions_path = (Path(model_config.OUTPUT_ROOT_PATH) /
+                            global_config.run_id / "predictions")
+
         predictions_path.mkdir(exist_ok=True, parents=True)
 
         image_list = list()
@@ -81,8 +82,8 @@ def main():
         for index, image in enumerate(image_list):
             input_img_name = image.name
             if not any(x in input_img_name for x in model_config.IGNORE_FILES):
-                cam_result = get_cam(
-                    model, image, "relu", "fc1"
+                cam_result = predict_with_cam(
+                    model.network, image, "relu", "fc1"
                 )
 
                 print(input_img_name, cam_result['label'])

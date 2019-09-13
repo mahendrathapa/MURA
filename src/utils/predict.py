@@ -5,10 +5,25 @@ from copy import deepcopy
 from matplotlib import cm
 
 from src.utils.data_utils import get_image
-from src.constants import Constants
+from src.architecture.densenet import Densenet
 
-def get_cam(model, to_predict, final_conv_layer='conv', fc_layer='fc'):
+
+def load_network(checkpoint_path, device='cpu'):
+    print("Loading checkpoint {}".format(checkpoint_path))
+
+    checkpoint = torch.load(checkpoint_path, map_location=device)
+
+    network = Densenet()
+    network.load_state_dict(checkpoint["network_dict"])
+
+    return network
+
+
+def predict_with_cam(network, to_predict, final_conv_layer='conv',
+                     fc_layer='fc', device='cpu'):
+
     features = list()
+
     def get_features(module, input, output):
         features.extend((output.cpu().data).numpy())
 
@@ -16,11 +31,11 @@ def get_cam(model, to_predict, final_conv_layer='conv', fc_layer='fc'):
     image = deepcopy(image_original)
     image_original = image_original.squeeze(0).squeeze(0).cpu().numpy()
 
-    layer_to_hook = model.network._modules.get(final_conv_layer)
+    layer_to_hook = network._modules.get(final_conv_layer)
     hook = layer_to_hook.register_forward_hook(get_features)
     with torch.no_grad():
-        image = image.to(model.device)
-        prediction = model.network(image)
+        image = image.to(device)
+        prediction = network(image)
         prediction_probability = torch.sigmoid(prediction)
     hook.remove()
 
@@ -29,7 +44,7 @@ def get_cam(model, to_predict, final_conv_layer='conv', fc_layer='fc'):
     feature = features[0]
     nc, h, w = feature.shape
     weight_softmax_params = list(
-        model.network._modules.get(fc_layer).parameters()
+        network._modules.get(fc_layer).parameters()
     )
     weight_softmax = np.squeeze(
         weight_softmax_params[0].cpu().data.numpy()
@@ -59,4 +74,3 @@ def get_cam(model, to_predict, final_conv_layer='conv', fc_layer='fc'):
         "heatmap": image_heatmap
     }
     return result
-
