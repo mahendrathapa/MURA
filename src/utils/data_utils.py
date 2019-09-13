@@ -44,7 +44,7 @@ def get_image(image_path, transforms=None, unsqueeze_dim=1):
     image = np.array(image)
     image = image.astype('float')
 
-    if Constants.NORMALIZE:
+    if Constants.NORMALIZE and not Constants.PRETRAINED:
         image = image - Constants.GLOBAL_MEAN
 
     if Constants.PRETRAINED:

@@ -12,7 +12,7 @@ class Constants:
 
     IMAGE_SIZE = 320
 
-    NORMALIZE = True
+    NORMALIZE = False if PRETRAINED else True
 
     GLOBAL_MEAN = 52.60
 

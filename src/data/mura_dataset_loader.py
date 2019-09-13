@@ -19,8 +19,6 @@ class MuraDataSetLoader:
 
         train_negative_data = pd.read_csv(self.config.TRAIN_NEG_DATA_CSV)
 
-        total_data = len(train_positive_data) + len(train_negative_data)
-
         data_set = TrainMuraDataset(
                 self.config,
                 train_positive_data,
@@ -43,7 +41,7 @@ class MuraDataSetLoader:
                 )
             concat_data_set = ConcatDataset(dataset_list)
             print(f"Initial total data: {data_set.__len__()}")
-            print(f"Initial total data: {concat_data_set.__len__()}")
+            print(f"Final total data: {concat_data_set.__len__()}")
             return DataLoader(
                     concat_data_set,
                     batch_size=self.config.TRAIN_BATCH_SIZE,
