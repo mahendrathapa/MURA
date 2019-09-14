@@ -33,3 +33,8 @@ class Constants:
     # For prediction
     RUN_ID = ""
     MODEL_NAME = ""
+
+    DECISION_PROBABILITY = 0.5
+
+    POSITIVE_CLASS = "Abnormal X-ray"
+    NEGATIVE_CLASS = "Normal X-ray"

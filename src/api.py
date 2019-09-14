@@ -3,6 +3,8 @@ from pathlib import Path
 from PIL import Image
 
 from flask import Flask, request, send_from_directory
+from flask_cors import CORS
+
 import torch
 from werkzeug.utils import secure_filename
 
@@ -13,6 +15,7 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = Path('src/out/uploads')
 app.config['UPLOAD_FOLDER'].mkdir(parents=True, exist_ok=True)
 
+CORS(app)
 
 device = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
@@ -61,6 +64,9 @@ def get_result():
         Image.fromarray(prediction_result['heatmap']).save(
             app.config['UPLOAD_FOLDER'] / predicted_save_path)
 
+        if Constants.NEGATIVE_CLASS == prediction_result['label']:
+            predicted_save_path = original_save_path
+
         result = {}
         result['original_image'] = str(original_save_path)
         result['predict_image'] = str(predicted_save_path)
@@ -70,4 +76,4 @@ def get_result():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=8000)

@@ -6,6 +6,7 @@ from matplotlib import cm
 
 from src.utils.data_utils import get_image
 from src.architecture.densenet import Densenet
+from src.constants import Constants
 
 
 def load_network(checkpoint_path, device='cpu'):
@@ -68,9 +69,15 @@ def predict_with_cam(network, to_predict, final_conv_layer='conv',
     image_heatmap = 0.2 * heatmap + 0.8 * np.expand_dims(image_original, -1)
     image_heatmap = np.uint8(image_heatmap)
 
+    if prediction_probability.item() >= Constants.DECISION_PROBABILITY:
+        prediction_class = Constants.POSITIVE_CLASS
+    else:
+        prediction_class = Constants.NEGATIVE_CLASS
+
     result = {
         "image": image_original,
-        "label": prediction_probability.item(),
+        "label": prediction_class,
+        "prediction_probability": prediction_probability.item(),
         "heatmap": image_heatmap
     }
     return result
