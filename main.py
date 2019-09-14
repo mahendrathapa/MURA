@@ -15,6 +15,7 @@ from src.config.config import LocalConfig, ServerConfig
 from src.data.mura_dataset_loader import MuraDataSetLoader
 from src.model.DenseNet_model import DenseNetModel
 from src.utils.predict import predict_with_cam
+from src.constants import Constants
 
 torch.manual_seed(123456789)
 
