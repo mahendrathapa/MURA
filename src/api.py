@@ -64,6 +64,9 @@ def get_result():
         Image.fromarray(prediction_result['heatmap']).save(
             app.config['UPLOAD_FOLDER'] / predicted_save_path)
 
+        if Constants.NEGATIVE_CLASS == prediction_result['label']:
+            predicted_save_path = original_save_path
+
         result = {}
         result['original_image'] = str(original_save_path)
         result['predict_image'] = str(predicted_save_path)
