@@ -1,23 +1,26 @@
-# This repo dedicated for the research using Standford's Musculoskeletal Radiographs (MURA) dataset to detect Abnormality #
+# This repo is dedicated for our attempt in research using Standford's Musculoskeletal Radiographs (MURA) dataset to detect abnormality #
 
-# Train Model #
-``` python main.py --env server --model train ```
-
-# Inference from Model #
-``` python main.py --env server --mode predict --run_id <unique identifier> --model_checkpoint <saved model present inside out/<run_id>/checkpoints --predict_data_dir <image dir for inference>```
-
-### Set up Conda environment ###
+# Set up conda environment #
 ``` bash setup.sh ```
 
-### Activate Conda environment ###
+### Activate conda environment ###
 ``` conda activate mura ```
 
-# Run the Flask Server #
-Flask servers the trained model through API, Before serving, we need to add the RUN_ID and MODEL_NAME in src/constant.py
+# Train Model #
+``` python main.py --env server --mode train ```
+
+# Inference from Model #
+``` python main.py --env server --mode predict --run_id <unique identifier> --model_checkpoint <saved model present inside out/<run_id>/checkpoints> --predict_data_dir <image dir for inference>```
+
+# Back-End: Run the Flask Server #
+Flask serves the trained model through API, before serving, we need to update the RUN_ID and MODEL_NAME in src/constant.py
+
 ``` python -m src.api ```
 
 # Front-End #
 Front-End App is developed in React.
+
+To host the front end, change to the dir:
 
 ``` cd src/frontend ```
 
