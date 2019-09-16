@@ -16,7 +16,7 @@ class Constants:
 
     GLOBAL_MEAN = 52.60
 
-    LR_DECAY = {"no_of_epochs": 4, "factor": 0.1}
+    LR_DECAY = {"no_of_epochs": 3, "factor": 0.1}
 
     TRANSFORMATIONS = ["flip", "jitter", "rotate", "compose"]
 

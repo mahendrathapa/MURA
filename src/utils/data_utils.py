@@ -69,7 +69,7 @@ def get_transforms(transform):
                                 hue=0
     )
     transform_dict["rotate"] = pytorch_transforms.RandomRotation(
-                                (-10, 10),
+                                (-30, 30),
                                 resample=False,
                                 expand=False,
                                 center=None

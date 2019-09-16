@@ -46,7 +46,7 @@ class Config:
     def __init__(self, train_batch_size, val_batch_size, test_batch_size,
                  train_num_workers, val_num_workers, test_num_workers,
                  train_shuffle=True, val_shuffle=True, test_shuffle=True,
-                 learning_rate=0.0001, epoch=100, model_dump_gap=2,
+                 learning_rate=0.00001, epoch=100, model_dump_gap=2,
                  sampling_ratio=1.0, cutoff_thersh=0.5):
 
         self.TRAIN_BATCH_SIZE = train_batch_size
