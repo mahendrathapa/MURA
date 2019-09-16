@@ -123,7 +123,6 @@ class DenseNetModel:
             Path(self.base_out_dir) / "tensorboard"
         )
 
-        total_data = (len(self.train_data) * 2 * self.model_config.TRAIN_BATCH_SIZE) / self.model_config.SAMPLING_RATIO
         print(f"Run ID : {self.config.run_id}")
         print("Training started at: {}".format(
             time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime())
@@ -135,9 +134,8 @@ class DenseNetModel:
         start = self.start_epoch
         end = start + self.model_config.epoch
 
+        self.network = self.network.train()
         for epoch in range(start, end):
-            self.network = self.network.train()
-
             for iteration, batch_set in enumerate(self.train_data):
                 inputs = torch.cat((batch_set["positive_x"].to(self.device), batch_set["negative_x"].to(self.device)))
                 target = torch.cat((batch_set["positive_y"].to(self.device), batch_set["negative_y"].to(self.device)))
@@ -274,6 +272,7 @@ class DenseNetModel:
                     torch.cat(target_list),
                     torch.cat(predictions_list)
             )
+        self.network = self.network.train()
 
         return (running_loss / total_count), running_kappa
 
