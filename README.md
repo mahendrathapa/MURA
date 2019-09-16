@@ -30,6 +30,14 @@ To host the front end, change to the dir:
 ## Run Front-End ##
 ``` yarn start ```
 
+# Our Trained Model
+```
+* Download link for latest model: 
+      - https://drive.google.com/drive/folders/1pnME9FFNsNJ8WJcuofn33PbExCN-XzzM?usp=sharing
+* Create necessary folder structure: out/<run_id>/checkpoints
+* Move the downloaded model inside: out/<run_id>/checkpoints
+```
+
 # Citation #
 
 ``` 
